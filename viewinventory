@@ -1,32 +1,20 @@
-<html>
-<head>
-    <title>Inventory</title>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-    <h1>Medication Inventory</h1>
-    <table border="1">
-        <tr>
-            <th>Medication Name</th>
-            <th>Dosage</th>
-            <th>Manufacturer</th>
-            <th>Quantity Available</th>
-        </tr>
-        <?php if (empty($inventory)): ?>
-            <tr>
-                <td colspan="4">No inventory data available.</td>
-            </tr>
-        <?php else: ?>
-            <?php foreach ($inventory as $item): ?>
-                <tr>
-                    <td><?= htmlspecialchars($item['medicationName']) ?></td>
-                    <td><?= htmlspecialchars($item['dosage']) ?></td>
-                    <td><?= htmlspecialchars($item['manufacturer']) ?></td>
-                    <td><?= htmlspecialchars($item['quantityAvailable']) ?></td>
-                </tr>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </table>
-    <a href="home.php">Back to Dashboard</a>
-</body>
-</html>
+<?php
+session_start();
+if (!isset($_SESSION['userId']) || $_SESSION['userType'] != 'pharmacist') {
+    header("Location: login.php");
+    exit;
+}
+include 'db.php';
+
+$sql = "SELECT m.medicationName, i.quantityAvailable, i.lastUpdated 
+        FROM Inventory i 
+        JOIN Medications m ON i.medicationId = m.medicationId";
+$result = $conn->query($sql);
+
+echo "<h2>Inventory</h2>";
+echo "<table border='1'><tr><th>Medication</th><th>Quantity Available</th><th>Last Updated</th></tr>";
+while ($row = $result->fetch_assoc()) {
+    echo "<tr><td>{$row['medicationName']}</td><td>{$row['quantityAvailable']}</td><td>{$row['lastUpdated']}</td></tr>";
+}
+echo "</table>";
+?>
