@@ -1,16 +1,54 @@
-<html>
-<head><title>Add Prescription</title>
-<link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-    <h1>Add Reservation</h1>
-    <form method="POST" action="?action=addPrescription">
-        Patient Username: <input type="text" name="patient_username" /><br>
-        Medication ID : <input type="number" name="medication_id"/><br>
-        Dossage Instructions: <textarea name="dosage_instructions"></textarea><br>
-        Quantity: <input type="number" name="quantity" /><br>
-        <button type="submit">Save</button>
-    </form>
-    <a href="home.php">Back to Home</a>
-</body>
-</html>
+<?php
+session_start();
+if (!isset($_SESSION['userId'])) {
+    header("Location: login.php");
+    exit;
+}
+include 'db.php';
+
+$userId = $_SESSION['userId'];
+$userType = $_SESSION['userType'];
+
+echo "<h2>Prescriptions</h2>";
+
+if ($userType == 'pharmacist') {
+    $stmt = $conn->prepare("SELECT p.prescriptionId, u.userName, m.medicationName, p.dosageInstructions, p.quantity, p.prescribedDate
+                            FROM Prescriptions p
+                            JOIN Users u ON p.userId = u.userId
+                            JOIN Medications m ON p.medicationId = m.medicationId
+                            ORDER BY p.prescribedDate DESC");
+} else {
+    $stmt = $conn->prepare("SELECT p.prescriptionId, u.userName, m.medicationName, p.dosageInstructions, p.quantity, p.prescribedDate
+                            FROM Prescriptions p
+                            JOIN Users u ON p.userId = u.userId
+                            JOIN Medications m ON p.medicationId = m.medicationId
+                            WHERE p.userId = ?
+                            ORDER BY p.prescribedDate DESC");
+    $stmt->bind_param("i", $userId);
+}
+
+$stmt->execute();
+$result = $stmt->get_result();
+
+echo "<table border='1'>
+<tr>
+    <th>ID</th>
+    <th>Patient</th>
+    <th>Medication</th>
+    <th>Instructions</th>
+    <th>Quantity</th>
+    <th>Date</th>
+</tr>";
+
+while ($row = $result->fetch_assoc()) {
+    echo "<tr>
+            <td>{$row['prescriptionId']}</td>
+            <td>{$row['userName']}</td>
+            <td>{$row['medicationName']}</td>
+            <td>{$row['dosageInstructions']}</td>
+            <td>{$row['quantity']}</td>
+            <td>{$row['prescribedDate']}</td>
+          </tr>";
+}
+echo "</table>";
+?>
